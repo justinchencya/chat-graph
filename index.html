@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGraph - AI Conversation Graph</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left Sidebar -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Sessions</h3>
+            </div>
+            <div class="sidebar-content">
+                <button id="new-session-btn" class="new-session-btn">Create New Session</button>
+                <div id="session-cards" class="session-cards"></div>
+            </div>
+        </div>
+        
+        <!-- Main App -->
+        <div class="main-app">
+            <header>
+                <div class="header-left">
+                    <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
+                </div>
+                <div class="header-center">
+                </div>
+                <button id="settings-btn" class="settings-button">Settings</button>
+            </header>
+            
+            <div class="main-content">
+            <div class="graph-container">
+                <svg id="graph"></svg>
+                <div class="graph-controls">
+                    <button id="reset-zoom">Reset View</button>
+                    <button id="export-data">Export Data</button>
+                </div>
+            </div>
+            
+            <div class="resize-handle"></div>
+            
+            <div class="chat-container">
+                <div class="chat-header">
+                    <span id="current-topic">General Discussion</span>
+                    <button id="new-topic">New Topic</button>
+                </div>
+                
+                <div class="chat-messages" id="chat-messages"></div>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chat-input" 
+                        placeholder="Type your message to AI..."
+                        rows="3"
+                    ></textarea>
+                    <button id="send-message">Send</button>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings" class="close-button">Close</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="openai-api-key">OpenAI API Key</label>
+                    <input type="password" id="openai-api-key" placeholder="sk-..." />
+                    <small>Your API key is stored locally in your browser</small>
+                </div>
+                <div class="setting-group">
+                    <label for="ai-model">AI Model</label>
+                    <select id="ai-model">
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label for="max-tokens">Max Response Length</label>
+                    <input type="number" id="max-tokens" value="1000" min="100" max="4000" />
+                </div>
+                <div class="setting-group">
+                    <label for="temperature">Creativity (Temperature)</label>
+                    <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7" />
+                    <span id="temperature-value">0.7</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="test-api" class="secondary-button">Test API</button>
+                <button id="save-settings" class="primary-button">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Context Menu for Nodes -->
+    <div id="node-context-menu" class="context-menu">
+        <div class="context-menu-item" id="rename-node">Rename</div>
+        <div class="context-menu-item" id="delete-node">Delete</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="export-node">Export Topic</div>
+    </div>
+    
+    <!-- Context Menu for Sessions -->
+    <div id="session-context-menu" class="context-menu">
+        <div class="context-menu-item" id="rename-session">Rename</div>
+        <div class="context-menu-item" id="delete-session">Delete</div>
+    </div>
+    
+    <!-- Selection Popup for Text Highlighting -->
+    <div id="selection-popup" class="selection-popup">
+        <button id="create-topic-from-selection" class="selection-button">
+            New Topic from Selection
+        </button>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

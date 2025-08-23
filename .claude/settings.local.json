@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(python3:*)",
-      "Bash(open http://localhost:8080)"
+      "Bash(open http://localhost:8080)",
+      "Bash(open:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

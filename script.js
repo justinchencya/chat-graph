@@ -296,15 +296,11 @@ class ChatGraph {
     }
     
     createNewTopic(topicName = null) {
-        const topic = topicName || prompt("Enter topic name:") || `Topic ${this.nodes.length + 1}`;
-        
-        if (!topic || topic.trim() === "") return;
-        
         const currentTopic = this.currentTopicId ? this.nodes.find(n => n.id === this.currentTopicId) : null;
         
         const newNode = {
             id: Date.now().toString(),
-            topic: topic,
+            topic: topicName || `New Topic ${this.nodes.length + 1}`,
             messages: [],
             messageCount: 0,
             x: Math.random() * 200 - 100,
@@ -328,10 +324,17 @@ class ChatGraph {
         this.clearChat();
         this.saveData();
         
-        this.addSystemMessage(`Started new topic: ${topic}`);
+        this.addSystemMessage(`Started new topic: ${newNode.topic}`);
         
         if (currentTopic && currentTopic.messages.length > 0) {
             this.addNavigationMessage(currentTopic);
+        }
+        
+        // If no custom topic name was provided, trigger inline rename
+        if (!topicName) {
+            setTimeout(() => {
+                this.renameNodeInline(newNode);
+            }, 100);
         }
     }
     
@@ -788,35 +791,6 @@ class ChatGraph {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
     
-    saveData() {
-        const data = {
-            nodes: this.nodes,
-            links: this.links,
-            currentTopicId: this.currentTopicId,
-            messageCount: this.messageCount
-        };
-        localStorage.setItem("chatGraphData", JSON.stringify(data));
-    }
-    
-    loadData() {
-        const savedData = localStorage.getItem("chatGraphData");
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            this.nodes = data.nodes || [];
-            this.links = data.links || [];
-            this.currentTopicId = data.currentTopicId;
-            this.messageCount = data.messageCount || 0;
-            
-            if (this.nodes.length > 0) {
-                this.updateGraph();
-                this.updateCurrentTopicDisplay();
-                
-                if (this.currentTopicId) {
-                    this.loadTopicMessages(this.currentTopicId);
-                }
-            }
-        }
-    }
     
     exportData() {
         const data = {
@@ -977,6 +951,79 @@ class ChatGraph {
         // Calculate screen coordinates from SVG coordinates
         const screenX = svgRect.left + node.x;
         const screenY = svgRect.top + node.y;
+        
+        // Create overlay input
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            left: ${screenX}px;
+            top: ${screenY}px;
+            z-index: 1000;
+            transform: translate(-50%, -50%);
+        `;
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = node.topic;
+        input.style.cssText = `
+            background: white;
+            border: 2px solid #10a37f;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 150px;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        `;
+        
+        overlay.appendChild(input);
+        document.body.appendChild(overlay);
+        
+        input.focus();
+        input.select();
+        
+        const finishRename = () => {
+            const newName = input.value.trim();
+            if (newName && newName !== node.topic) {
+                node.topic = newName;
+                this.updateGraph();
+                this.saveData();
+                
+                if (node.id === this.currentTopicId) {
+                    this.updateCurrentTopicDisplay();
+                }
+            }
+            document.body.removeChild(overlay);
+        };
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                finishRename();
+            } else if (e.key === 'Escape') {
+                document.body.removeChild(overlay);
+            }
+        });
+        
+        input.addEventListener('blur', finishRename);
+    }
+    
+    renameNodeInline(node) {
+        if (!node) return;
+        
+        // Get the SVG container and its bounding rect
+        const svg = document.getElementById("graph");
+        const svgRect = svg.getBoundingClientRect();
+        
+        // For newly created nodes, use center of screen if coordinates aren't set yet
+        const nodeX = node.x || (svg.clientWidth / 2);
+        const nodeY = node.y || (svg.clientHeight / 2);
+        
+        // Calculate screen coordinates from SVG coordinates
+        const screenX = svgRect.left + nodeX;
+        const screenY = svgRect.top + nodeY;
         
         // Create overlay input
         const overlay = document.createElement('div');
@@ -1382,6 +1429,12 @@ class ChatGraph {
         this.currentTopicId = session.currentTopicId;
         this.messageCount = session.messageCount;
         
+        // Ensure links have proper string IDs for D3.js force simulation
+        this.links = this.links.map(link => ({
+            source: typeof link.source === 'object' ? link.source.id : link.source,
+            target: typeof link.target === 'object' ? link.target.id : link.target
+        }));
+        
         localStorage.setItem("chatGraphLastSession", sessionId);
         
         this.updateGraph();
@@ -1400,7 +1453,11 @@ class ChatGraph {
         const session = this.sessions.get(this.currentSessionId);
         if (session) {
             session.nodes = [...this.nodes];
-            session.links = [...this.links];
+            // Ensure links are saved with string IDs, not node object references
+            session.links = this.links.map(link => ({
+                source: typeof link.source === 'object' ? link.source.id : link.source,
+                target: typeof link.target === 'object' ? link.target.id : link.target
+            }));
             session.currentTopicId = this.currentTopicId;
             session.messageCount = this.messageCount;
             this.saveSessions();
@@ -1597,9 +1654,6 @@ class ChatGraph {
         this.saveCurrentSessionData();
     }
     
-    loadData() {
-        // Data loading now handled by session management
-    }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

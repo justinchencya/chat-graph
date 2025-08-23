@@ -32,11 +32,6 @@ body {
     width: 80px;
 }
 
-.sidebar.collapsed .sidebar-header {
-    opacity: 0;
-    pointer-events: none;
-}
-
 .sidebar.collapsed .sidebar-content {
     opacity: 0;
     pointer-events: none;
@@ -46,16 +41,26 @@ body {
     padding: 1rem;
     border-bottom: 1px solid #e5e5e5;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     transition: opacity 0.3s ease;
 }
 
-.sidebar-header h3 {
-    color: #374151;
-    font-size: 1.1rem;
-    margin: 0;
-    font-weight: 600;
+.app-logo {
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    height: 42px;
+    width: 42px;
+    object-fit: contain;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+}
+
+.sidebar.collapsed .sidebar-header {
+    border-bottom: 1px solid transparent;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .sidebar-toggle {
@@ -161,7 +166,6 @@ body {
     transition: opacity 0.3s ease;
 }
 
-
 .session-cards {
     display: flex;
     flex-direction: column;
@@ -213,7 +217,6 @@ body {
     font-size: 0.8rem;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
-
 
 .session-card-info {
     font-size: 0.8rem;

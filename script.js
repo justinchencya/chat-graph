@@ -1221,7 +1221,7 @@ class ChatGraph {
             return;
         }
         
-        matchedSessions.forEach(({ session, sessionId }, index) => {
+        matchedSessions.forEach(({ session, sessionId }) => {
             const item = this.createSearchResultItem(session, sessionId);
             resultsContainer.appendChild(item);
         });
@@ -1257,7 +1257,7 @@ class ChatGraph {
             return;
         }
         
-        matchedFavorites.forEach(({ session, sessionId }, index) => {
+        matchedFavorites.forEach(({ session, sessionId }) => {
             const item = this.createSearchResultItem(session, sessionId);
             resultsContainer.appendChild(item);
         });
@@ -1326,7 +1326,7 @@ class ChatGraph {
     // Session Management Methods
     initializeOrCreateSession() {
         if (this.sessions.size === 0) {
-            this.createNewSession("Default Session");
+            this.createNewSession("New Session");
         } else {
             const lastSessionId = localStorage.getItem("chatGraphLastSession");
             if (lastSessionId && this.sessions.has(lastSessionId)) {
@@ -1464,7 +1464,7 @@ class ChatGraph {
         
         // If this was the only session, create a new default session
         if (this.sessions.size === 0) {
-            this.createNewSession("Default Session");
+            this.createNewSession("New Session");
             return;
         }
         

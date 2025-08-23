@@ -13,12 +13,13 @@ class ChatGraph {
             temperature: 0.7
         };
         
+        
         this.loadSettings();
         this.loadSessions();
         this.initializeGraph();
         this.initializeChat();
         this.initializeSettings();
-        this.initializeSessions();
+        this.initializeShortcuts();
         this.initializeSidebar();
         this.initializeResize();
         this.initializeTextSelection();
@@ -114,12 +115,26 @@ class ChatGraph {
         });
     }
     
-    initializeSessions() {
-        const newSessionBtn = document.getElementById("new-session-btn");
+    
+    initializeShortcuts() {
+        const createNewShortcut = document.getElementById("create-new-shortcut");
+        const searchShortcut = document.getElementById("search-session-shortcut");
+        const favoritesShortcut = document.getElementById("favorites-shortcut");
         
-        newSessionBtn.addEventListener("click", () => {
+        createNewShortcut.addEventListener("click", () => {
             this.createNewSession();
         });
+        
+        searchShortcut.addEventListener("click", () => {
+            this.openSearchModal();
+        });
+        
+        favoritesShortcut.addEventListener("click", () => {
+            this.openFavoritesModal();
+        });
+        
+        this.initializeSearchModal();
+        this.initializeFavoritesModal();
     }
     
     initializeSidebar() {
@@ -1071,6 +1086,237 @@ class ChatGraph {
         URL.revokeObjectURL(url);
         
         this.addSystemMessage(`Topic "${node.topic}" exported successfully.`);
+    }
+    
+    // Modal Methods
+    initializeSearchModal() {
+        const modal = document.getElementById('search-sessions-modal');
+        const input = document.getElementById('search-sessions-input');
+        const results = document.getElementById('search-results');
+        const closeBtn = document.getElementById('close-search-modal');
+        
+        closeBtn.addEventListener('click', () => this.closeSearchModal());
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.closeSearchModal();
+        });
+        
+        input.addEventListener('input', (e) => {
+            this.searchSessions(e.target.value, results);
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeSearchModal();
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.navigateSearchResults(e.key === 'ArrowDown' ? 1 : -1, results);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                this.selectHighlightedResult(results);
+            }
+        });
+    }
+    
+    initializeFavoritesModal() {
+        const modal = document.getElementById('favorites-sessions-modal');
+        const input = document.getElementById('favorites-sessions-input');
+        const results = document.getElementById('favorites-results');
+        const closeBtn = document.getElementById('close-favorites-modal');
+        
+        closeBtn.addEventListener('click', () => this.closeFavoritesModal());
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.closeFavoritesModal();
+        });
+        
+        input.addEventListener('input', (e) => {
+            this.searchFavorites(e.target.value, results);
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeFavoritesModal();
+            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.navigateSearchResults(e.key === 'ArrowDown' ? 1 : -1, results);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                this.selectHighlightedResult(results);
+            }
+        });
+    }
+    
+    openSearchModal() {
+        const modal = document.getElementById('search-sessions-modal');
+        const input = document.getElementById('search-sessions-input');
+        const results = document.getElementById('search-results');
+        
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.classList.add('active');
+            input.focus();
+            this.searchSessions('', results); // Show all sessions initially
+        }, 10);
+    }
+    
+    closeSearchModal() {
+        const modal = document.getElementById('search-sessions-modal');
+        const input = document.getElementById('search-sessions-input');
+        
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            input.value = '';
+        }, 300);
+    }
+    
+    openFavoritesModal() {
+        const modal = document.getElementById('favorites-sessions-modal');
+        const input = document.getElementById('favorites-sessions-input');
+        const results = document.getElementById('favorites-results');
+        
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.classList.add('active');
+            input.focus();
+            this.searchFavorites('', results); // Show all favorites initially
+        }, 10);
+    }
+    
+    closeFavoritesModal() {
+        const modal = document.getElementById('favorites-sessions-modal');
+        const input = document.getElementById('favorites-sessions-input');
+        
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            input.value = '';
+        }, 300);
+    }
+    
+    searchSessions(searchTerm, resultsContainer) {
+        const term = searchTerm.toLowerCase().trim();
+        resultsContainer.innerHTML = '';
+        
+        let matchedSessions = [];
+        
+        this.sessions.forEach((session, sessionId) => {
+            const sessionName = session.name.toLowerCase();
+            if (!term || sessionName.includes(term)) {
+                matchedSessions.push({ session, sessionId });
+            }
+        });
+        
+        if (matchedSessions.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'search-no-results';
+            noResults.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+                </svg>
+                No sessions found
+            `;
+            resultsContainer.appendChild(noResults);
+            return;
+        }
+        
+        matchedSessions.forEach(({ session, sessionId }, index) => {
+            const item = this.createSearchResultItem(session, sessionId);
+            resultsContainer.appendChild(item);
+        });
+    }
+    
+    searchFavorites(searchTerm, resultsContainer) {
+        const term = searchTerm.toLowerCase().trim();
+        const favoriteThreshold = 3;
+        resultsContainer.innerHTML = '';
+        
+        let matchedFavorites = [];
+        
+        this.sessions.forEach((session, sessionId) => {
+            const topicCount = session.nodes ? session.nodes.length : 0;
+            const sessionName = session.name.toLowerCase();
+            
+            if (topicCount >= favoriteThreshold && (!term || sessionName.includes(term))) {
+                matchedFavorites.push({ session, sessionId });
+            }
+        });
+        
+        if (matchedFavorites.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'search-no-results';
+            noResults.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
+                </svg>
+                ${term ? 'No matching favorites found' : 'No favorite sessions yet'}
+            `;
+            resultsContainer.appendChild(noResults);
+            return;
+        }
+        
+        matchedFavorites.forEach(({ session, sessionId }, index) => {
+            const item = this.createSearchResultItem(session, sessionId);
+            resultsContainer.appendChild(item);
+        });
+    }
+    
+    createSearchResultItem(session, sessionId) {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.dataset.sessionId = sessionId;
+        
+        const createdDate = new Date(session.createdAt).toLocaleDateString();
+        const topicCount = session.nodes ? session.nodes.length : 0;
+        
+        item.innerHTML = `
+            <div class="search-result-name">${session.name}</div>
+            <div class="search-result-info">
+                <span>${topicCount} topics</span>
+                <span>${createdDate}</span>
+            </div>
+        `;
+        
+        item.addEventListener('click', () => {
+            this.switchToSession(sessionId);
+            this.closeSearchModal();
+            this.closeFavoritesModal();
+        });
+        
+        return item;
+    }
+    
+    navigateSearchResults(direction, resultsContainer) {
+        const items = resultsContainer.querySelectorAll('.search-result-item');
+        if (items.length === 0) return;
+        
+        let currentIndex = -1;
+        items.forEach((item, index) => {
+            if (item.classList.contains('highlighted')) {
+                currentIndex = index;
+                item.classList.remove('highlighted');
+            }
+        });
+        
+        let newIndex = currentIndex + direction;
+        if (newIndex < 0) newIndex = items.length - 1;
+        if (newIndex >= items.length) newIndex = 0;
+        
+        items[newIndex].classList.add('highlighted');
+        items[newIndex].scrollIntoView({ block: 'nearest' });
+    }
+    
+    selectHighlightedResult(resultsContainer) {
+        const highlighted = resultsContainer.querySelector('.search-result-item.highlighted');
+        if (highlighted) {
+            highlighted.click();
+        } else {
+            const firstItem = resultsContainer.querySelector('.search-result-item');
+            if (firstItem) {
+                firstItem.click();
+            }
+        }
     }
     
     // Session Management Methods

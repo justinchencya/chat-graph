@@ -1215,7 +1215,7 @@ class ChatGraph {
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
                 </svg>
-                No sessions found
+                <div class="search-no-results-text">No sessions found</div>
             `;
             resultsContainer.appendChild(noResults);
             return;
@@ -1229,16 +1229,14 @@ class ChatGraph {
     
     searchFavorites(searchTerm, resultsContainer) {
         const term = searchTerm.toLowerCase().trim();
-        const favoriteThreshold = 3;
         resultsContainer.innerHTML = '';
         
         let matchedFavorites = [];
         
         this.sessions.forEach((session, sessionId) => {
-            const topicCount = session.nodes ? session.nodes.length : 0;
             const sessionName = session.name.toLowerCase();
             
-            if (topicCount >= favoriteThreshold && (!term || sessionName.includes(term))) {
+            if (session.isFavorite && (!term || sessionName.includes(term))) {
                 matchedFavorites.push({ session, sessionId });
             }
         });
@@ -1250,7 +1248,10 @@ class ChatGraph {
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
                 </svg>
-                ${term ? 'No matching favorites found' : 'No favorite sessions yet'}
+                <div class="search-no-results-text">
+                    ${term ? 'No matching favorites found' : 'No favorite sessions yet'}<br>
+                    ${!term ? '<small style="color: #9ca3af; font-size: 0.8rem;">Right-click any session to add it to favorites</small>' : ''}
+                </div>
             `;
             resultsContainer.appendChild(noResults);
             return;
@@ -1271,7 +1272,10 @@ class ChatGraph {
         const topicCount = session.nodes ? session.nodes.length : 0;
         
         item.innerHTML = `
-            <div class="search-result-name">${session.name}</div>
+            <div class="search-result-name">
+                ${session.isFavorite ? '<span class="favorite-star">⭐</span>' : ''}
+                ${session.name}
+            </div>
             <div class="search-result-info">
                 <span>${topicCount} topics</span>
                 <span>${createdDate}</span>
@@ -1345,7 +1349,8 @@ class ChatGraph {
             links: [],
             currentTopicId: null,
             messageCount: 0,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            isFavorite: false
         };
         
         this.sessions.set(sessionId, session);
@@ -1473,6 +1478,15 @@ class ChatGraph {
         }
     }
     
+    toggleSessionFavorite(sessionId) {
+        const session = this.sessions.get(sessionId);
+        if (!session) return;
+        
+        session.isFavorite = !session.isFavorite;
+        this.saveSessions();
+        this.updateSessionCards();
+    }
+    
     updateSessionCards() {
         const container = document.getElementById("session-cards");
         container.innerHTML = "";
@@ -1487,7 +1501,10 @@ class ChatGraph {
             
             card.innerHTML = `
                 <div class="session-card-header">
-                    <div class="session-card-name">${session.name}</div>
+                    <div class="session-card-name">
+                        ${session.isFavorite ? '<span class="favorite-star">⭐</span>' : ''}
+                        ${session.name}
+                    </div>
                 </div>
                 <div class="session-card-info">
                     <span>${topicCount} topics</span>
@@ -1512,7 +1529,13 @@ class ChatGraph {
         this.hideAllContextMenus();
         
         const contextMenu = document.getElementById("session-context-menu");
+        const favoriteBtn = document.getElementById("toggle-favorite");
+        const session = this.sessions.get(sessionId);
+        
         this.selectedSessionId = sessionId;
+        
+        // Update favorite button text
+        favoriteBtn.textContent = session?.isFavorite ? "Remove from Favorites" : "Add to Favorites";
         
         contextMenu.style.display = "block";
         contextMenu.style.left = `${event.pageX}px`;
@@ -1530,6 +1553,7 @@ class ChatGraph {
     initializeSessionContextMenu() {
         const contextMenu = document.getElementById("session-context-menu");
         const renameBtn = document.getElementById("rename-session");
+        const favoriteBtn = document.getElementById("toggle-favorite");
         const deleteBtn = document.getElementById("delete-session");
         
         const hideMenu = () => {
@@ -1540,6 +1564,12 @@ class ChatGraph {
         renameBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             this.renameSession(this.selectedSessionId);
+            hideMenu();
+        });
+        
+        favoriteBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.toggleSessionFavorite(this.selectedSessionId);
             hideMenu();
         });
         

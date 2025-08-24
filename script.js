@@ -196,7 +196,7 @@ class ChatGraph {
         
         // Hide popup when clicking elsewhere
         document.addEventListener("click", (e) => {
-            if (!selectionPopup.contains(e.target) && !e.target.closest('.message.ai')) {
+            if (!selectionPopup.contains(e.target) && !e.target.closest('.message')) {
                 this.hideSelectionPopup();
             }
         });
@@ -211,14 +211,14 @@ class ChatGraph {
             return;
         }
         
-        // Check if selection is within an AI message
+        // Check if selection is within any message (user or AI)
         const range = selection.getRangeAt(0);
         const container = range.commonAncestorContainer;
-        const aiMessage = container.nodeType === Node.TEXT_NODE 
-            ? container.parentElement.closest('.message.ai')
-            : container.closest('.message.ai');
+        const message = container.nodeType === Node.TEXT_NODE 
+            ? container.parentElement.closest('.message')
+            : container.closest('.message');
         
-        if (!aiMessage) {
+        if (!message) {
             this.hideSelectionPopup();
             return;
         }
@@ -270,13 +270,8 @@ class ChatGraph {
         // Remove excessive whitespace and line breaks
         topicName = topicName.replace(/\s+/g, ' ').trim();
         
-        // Create new topic
-        this.createNewTopic(topicName);
-        
-        // Add the selected text as the first user message in the new topic
-        if (this.selectedText.length > topicName.length) {
-            this.addMessage("user", `Please explain more about: "${this.selectedText}"`);
-        }
+        // Create new topic with selected text as context
+        this.createNewTopic(topicName, this.selectedText);
         
         this.hideSelectionPopup();
         
@@ -295,7 +290,7 @@ class ChatGraph {
         }
     }
     
-    createNewTopic(topicName = null) {
+    createNewTopic(topicName = null, contextText = null) {
         const currentTopic = this.currentTopicId ? this.nodes.find(n => n.id === this.currentTopicId) : null;
         
         const newNode = {
@@ -306,7 +301,8 @@ class ChatGraph {
             x: Math.random() * 200 - 100,
             y: Math.random() * 200 - 100,
             parentTopicId: currentTopic?.id || null,
-            parentTopicName: currentTopic?.topic || null
+            parentTopicName: currentTopic?.topic || null,
+            contextText: contextText || null
         };
         
         this.nodes.push(newNode);
@@ -422,9 +418,16 @@ class ChatGraph {
             const sessionHistory = this.getSessionConversationHistory(15);
             const currentSession = this.sessions.get(this.currentSessionId);
             
+            let systemContent = `You are a helpful AI assistant in session "${currentSession?.name || 'Unknown Session'}". The current topic is "${currentTopic?.topic || 'General Discussion'}". You have access to the conversation history across all topics in this session. Keep responses engaging and educational. When referencing previous conversations from other topics, you can mention the topic name for clarity.`;
+            
+            // Add context text if this topic was created from selected text
+            if (currentTopic?.contextText) {
+                systemContent += `\n\nIMPORTANT: This topic was created based on the following selected text: "${currentTopic.contextText}". Use this as context for understanding what the user wants to discuss, even if they don't explicitly mention it in their first message.`;
+            }
+            
             const systemMessage = {
                 role: "system",
-                content: `You are a helpful AI assistant in session "${currentSession?.name || 'Unknown Session'}". The current topic is "${currentTopic?.topic || 'General Discussion'}". You have access to the conversation history across all topics in this session. Keep responses engaging and educational. When referencing previous conversations from other topics, you can mention the topic name for clarity.`
+                content: systemContent
             };
             
             const messages = [

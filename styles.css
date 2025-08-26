@@ -401,6 +401,10 @@ header p {
     padding: 0.75rem 1rem;
     border-radius: 12px;
     line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    box-sizing: border-box;
 }
 
 .message.user {
@@ -496,6 +500,9 @@ header p {
     overflow-x: auto;
     margin: 1rem 0;
     border: 1px solid #334155;
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .message.ai pre code {
@@ -510,6 +517,8 @@ header p {
     border-collapse: collapse;
     margin: 1rem 0;
     width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
 }
 
 .message.ai th,
@@ -517,6 +526,8 @@ header p {
     border: 1px solid #e5e5e5;
     padding: 0.5rem 0.75rem;
     text-align: left;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .message.ai th {
@@ -539,6 +550,26 @@ header p {
 
 .message.ai a:hover {
     color: #2563eb;
+}
+
+/* LaTeX/MathJax styling */
+.message.ai .MathJax {
+    font-size: inherit !important;
+}
+
+.message.ai mjx-container {
+    display: inline-block !important;
+    margin: 0.2em 0.1em !important;
+}
+
+.message.ai mjx-container[display="true"] {
+    display: block !important;
+    text-align: center !important;
+    margin: 1em auto !important;
+}
+
+.message.ai mjx-math {
+    color: inherit !important;
 }
 
 .message.system {

@@ -320,7 +320,12 @@ class ChatGraph {
         this.clearChat();
         this.saveData();
         
-        this.addSystemMessage(`Started new topic: ${newNode.topic}`);
+        if (contextText) {
+            this.addSystemMessage(`Started new topic: ${newNode.topic}`);
+            this.addSystemMessage(`Context: "${contextText}"`);
+        } else {
+            this.addSystemMessage(`Started new topic: ${newNode.topic}`);
+        }
         
         if (currentTopic && currentTopic.messages.length > 0) {
             this.addNavigationMessage(currentTopic);
@@ -368,6 +373,19 @@ class ChatGraph {
     }
     
     addSystemMessage(content) {
+        const currentTopic = this.nodes.find(n => n.id === this.currentTopicId);
+        if (!currentTopic) {
+            // If no current topic, just display the message without saving
+            const message = {
+                id: ++this.messageCount,
+                sender: "system",
+                content,
+                timestamp: new Date().toISOString()
+            };
+            this.displayMessage(message);
+            return;
+        }
+        
         const message = {
             id: ++this.messageCount,
             sender: "system",
@@ -375,32 +393,41 @@ class ChatGraph {
             timestamp: new Date().toISOString()
         };
         
+        currentTopic.messages.push(message);
+        currentTopic.messageCount++;
+        
         this.displayMessage(message);
+        this.saveData();
     }
     
-    getSessionConversationHistory(maxMessages = 20) {
-        if (!this.currentSessionId) return [];
+    getCurrentTopicHistory(maxMessages = 10) {
+        const currentTopic = this.nodes.find(n => n.id === this.currentTopicId);
+        if (!currentTopic || !currentTopic.messages) return [];
         
-        const allMessages = [];
+        return currentTopic.messages
+            .filter(message => message.sender !== 'system' && !message.isNavigationLink)
+            .slice(-maxMessages)
+            .map(msg => ({
+                role: msg.sender === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            }));
+    }
+    
+    getParentTopicContext() {
+        const currentTopic = this.nodes.find(n => n.id === this.currentTopicId);
+        if (!currentTopic?.parentTopicId) return [];
         
-        this.nodes.forEach(node => {
-            node.messages.forEach(message => {
-                if (message.sender !== 'system') {
-                    allMessages.push({
-                        ...message,
-                        topicName: node.topic,
-                        timestamp: new Date(message.timestamp).getTime()
-                    });
-                }
-            });
-        });
+        const parentTopic = this.nodes.find(n => n.id === currentTopic.parentTopicId);
+        if (!parentTopic?.messages) return [];
         
-        allMessages.sort((a, b) => a.timestamp - b.timestamp);
-        
-        return allMessages.slice(-maxMessages).map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
-            content: msg.content
-        }));
+        // Get last few messages from parent topic for context
+        return parentTopic.messages
+            .filter(message => message.sender !== 'system' && !message.isNavigationLink)
+            .slice(-3)
+            .map(msg => ({
+                role: msg.sender === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            }));
     }
     
     async simulateAIResponse(userMessage) {
@@ -415,14 +442,20 @@ class ChatGraph {
         
         try {
             const currentTopic = this.nodes.find(n => n.id === this.currentTopicId);
-            const sessionHistory = this.getSessionConversationHistory(15);
             const currentSession = this.sessions.get(this.currentSessionId);
+            const topicHistory = this.getCurrentTopicHistory();
+            const parentContext = this.getParentTopicContext();
             
-            let systemContent = `You are a helpful AI assistant in session "${currentSession?.name || 'Unknown Session'}". The current topic is "${currentTopic?.topic || 'General Discussion'}". You have access to the conversation history across all topics in this session. Keep responses engaging and educational. When referencing previous conversations from other topics, you can mention the topic name for clarity.`;
+            let systemContent = `You are a helpful AI assistant in session "${currentSession?.name || 'Unknown Session'}". The current topic is "${currentTopic?.topic || 'General Discussion'}". Keep responses engaging and educational.`;
             
             // Add context text if this topic was created from selected text
             if (currentTopic?.contextText) {
-                systemContent += `\n\nIMPORTANT: This topic was created based on the following selected text: "${currentTopic.contextText}". Use this as context for understanding what the user wants to discuss, even if they don't explicitly mention it in their first message.`;
+                systemContent += `\n\nIMPORTANT CONTEXT: This topic was created based on the following selected text: "${currentTopic.contextText}". When the user refers to "it", "this", "that", or uses other pronouns in their messages, they are likely referring to this selected text or concepts within it. Use this context to understand what the user wants to discuss.`;
+            }
+            
+            // Add parent topic context if this topic has a parent
+            if (currentTopic?.parentTopicId && parentContext.length > 0) {
+                systemContent += `\n\nFor additional context, this topic branched from "${currentTopic.parentTopicName}". Here are the last few messages from that topic for reference, but focus primarily on the current topic's conversation.`;
             }
             
             const systemMessage = {
@@ -432,7 +465,8 @@ class ChatGraph {
             
             const messages = [
                 systemMessage,
-                ...sessionHistory,
+                ...parentContext,
+                ...topicHistory,
                 {
                     role: "user",
                     content: userMessage
@@ -463,10 +497,6 @@ class ChatGraph {
             
             this.addMessage("ai", aiResponse);
             
-            if (Math.random() > 0.8) {
-                this.suggestTopicBranch(userMessage);
-            }
-            
         } catch (error) {
             console.error('OpenAI API Error:', error);
             this.addSystemMessage(`Error: ${error.message}`);
@@ -476,28 +506,6 @@ class ChatGraph {
         }
     }
     
-    suggestTopicBranch(userMessage) {
-        const keywords = userMessage.toLowerCase().split(" ");
-        const potentialTopics = [
-            "Deep Dive Analysis",
-            "Related Concepts",
-            "Practical Applications",
-            "Historical Context",
-            "Future Implications",
-            "Alternative Perspectives"
-        ];
-        
-        if (keywords.some(word => ["how", "why", "what", "explain"].includes(word))) {
-            const suggestedTopic = potentialTopics[Math.floor(Math.random() * potentialTopics.length)];
-            
-            setTimeout(() => {
-                const shouldBranch = confirm(`Would you like to explore "${suggestedTopic}" as a new topic branch?`);
-                if (shouldBranch) {
-                    this.createNewTopic(suggestedTopic);
-                }
-            }, 500);
-        }
-    }
     
     displayMessage(message) {
         const messagesContainer = document.getElementById("chat-messages");
@@ -521,9 +529,11 @@ class ChatGraph {
             // Render markdown for AI messages
             messageEl.innerHTML = marked.parse(message.content);
             
-            // Apply syntax highlighting after rendering
+            // Apply syntax highlighting and LaTeX rendering after rendering
             setTimeout(() => {
                 Prism.highlightAllUnder(messageEl);
+                // Render LaTeX if MathJax is available
+                this.renderMathJax(messageEl);
             }, 10);
         } else {
             // Keep plain text for user and system messages
@@ -598,6 +608,12 @@ class ChatGraph {
                 this.displayMessage(message);
             }
         });
+        
+        // Re-render MathJax for all AI messages after loading
+        setTimeout(() => {
+            const aiMessages = document.querySelectorAll('.message.ai');
+            aiMessages.forEach(msg => this.renderMathJax(msg));
+        }, 100);
         
         this.scrollToBottom();
     }
@@ -787,6 +803,27 @@ class ChatGraph {
             .links(this.links);
         
         this.simulation.alpha(0.3).restart();
+    }
+    
+    renderMathJax(element) {
+        // Check if MathJax is loaded and ready
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+            MathJax.typesetPromise([element]).catch((err) => {
+                console.warn('MathJax typeset failed:', err);
+            });
+        } else if (typeof MathJax !== 'undefined' && MathJax.Hub) {
+            // Fallback for older MathJax versions
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, element]);
+        } else {
+            // MathJax not loaded yet, try again after a delay
+            setTimeout(() => this.renderMathJax(element), 100);
+        }
+    }
+    
+    // Test method to add a LaTeX sample message
+    addLatexTestMessage() {
+        const testMessage = "Here's some inline math: $E = mc^2$ and display math:\n\n$$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$\n\nAnd more complex: $\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}$";
+        this.addMessage("ai", testMessage);
     }
     
     scrollToBottom() {

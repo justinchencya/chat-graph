@@ -271,6 +271,7 @@ class ChatGraph {
         topicName = topicName.replace(/\s+/g, ' ').trim();
         
         // Create new topic with selected text as context
+        console.log('Creating topic with context text:', this.selectedText);
         this.createNewTopic(topicName, this.selectedText);
         
         this.hideSelectionPopup();
@@ -305,6 +306,8 @@ class ChatGraph {
             contextText: contextText || null
         };
         
+        console.log('New topic created with contextText:', newNode.contextText);
+        
         this.nodes.push(newNode);
         
         if (this.currentTopicId && this.currentTopicId !== newNode.id) {
@@ -322,7 +325,7 @@ class ChatGraph {
         
         if (contextText) {
             this.addSystemMessage(`Started new topic: ${newNode.topic}`);
-            this.addSystemMessage(`Context: "${contextText}"`);
+            this.addSystemMessage(`📌 Context from selected text: "${contextText}"`);
         } else {
             this.addSystemMessage(`Started new topic: ${newNode.topic}`);
         }
@@ -450,7 +453,12 @@ class ChatGraph {
             
             // Add context text if this topic was created from selected text
             if (currentTopic?.contextText) {
-                systemContent += `\n\nIMPORTANT CONTEXT: This topic was created based on the following selected text: "${currentTopic.contextText}". When the user refers to "it", "this", "that", or uses other pronouns in their messages, they are likely referring to this selected text or concepts within it. Use this context to understand what the user wants to discuss.`;
+                systemContent += `\n\nIMPORTANT CONTEXT: This topic was created based on the following selected text: "${currentTopic.contextText}". 
+
+When the user refers to "it", "this", "that", "the concept", "the idea", or uses other pronouns in their messages, they are almost certainly referring to this selected text or concepts directly related to it. Always interpret their questions and statements in the context of this selected text. If they ask about "it" or "this", they mean the selected text above.`;
+                console.log('Context text being sent to AI:', currentTopic.contextText);
+            } else {
+                console.log('No context text found for current topic:', currentTopic);
             }
             
             // Add parent topic context if this topic has a parent
@@ -1694,8 +1702,17 @@ class ChatGraph {
         this.saveCurrentSessionData();
     }
     
+    // Debug function to check current topic context
+    debugCurrentTopic() {
+        const currentTopic = this.nodes.find(n => n.id === this.currentTopicId);
+        console.log('Current topic:', currentTopic);
+        console.log('Context text:', currentTopic?.contextText);
+        console.log('All nodes:', this.nodes);
+        return currentTopic;
+    }
+    
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    new ChatGraph();
+    window.chatGraph = new ChatGraph();
 });

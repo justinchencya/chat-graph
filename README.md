@@ -55,12 +55,8 @@ ChatGraph is an interactive web application that visualizes AI conversations as 
 - OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
 
 ### Installation
-```bash
-# Clone or download the repository
-git clone [repository-url]
 
-# No build process required - just open index.html in your browser
-```
+No build process required — clone or download the repository and open `index.html` in your browser.
 
 ### Configuration
 1. Open the application in your browser
@@ -161,10 +157,6 @@ This is a client-side application built with vanilla JavaScript. To contribute:
 2. Make your changes to `script.js`, `index.html`, or `styles.css`
 3. Test in multiple browsers
 4. Submit a pull request
-
-## License
-
-[Add your license information here]
 
 ## Support
 

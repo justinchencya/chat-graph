@@ -60,6 +60,8 @@ class ChatGraph {
     }
     
     initializeChat() {
+        marked.use({ breaks: true, gfm: true });
+
         const chatInput = document.getElementById("chat-input");
         const sendButton = document.getElementById("send-message");
         const newTopicButton = document.getElementById("new-topic");
@@ -271,7 +273,6 @@ class ChatGraph {
         topicName = topicName.replace(/\s+/g, ' ').trim();
         
         // Create new topic with selected text as context
-        console.log('Creating topic with context text:', this.selectedText);
         this.createNewTopic(topicName, this.selectedText);
         
         this.hideSelectionPopup();
@@ -305,8 +306,6 @@ class ChatGraph {
             parentTopicName: currentTopic?.topic || null,
             contextText: contextText || null
         };
-        
-        console.log('New topic created with contextText:', newNode.contextText);
         
         this.nodes.push(newNode);
         
@@ -456,9 +455,6 @@ class ChatGraph {
                 systemContent += `\n\nIMPORTANT CONTEXT: This topic was created based on the following selected text: "${currentTopic.contextText}". 
 
 When the user refers to "it", "this", "that", "the concept", "the idea", or uses other pronouns in their messages, they are almost certainly referring to this selected text or concepts directly related to it. Always interpret their questions and statements in the context of this selected text. If they ask about "it" or "this", they mean the selected text above.`;
-                console.log('Context text being sent to AI:', currentTopic.contextText);
-            } else {
-                console.log('No context text found for current topic:', currentTopic);
             }
             
             // Add parent topic context if this topic has a parent
@@ -521,19 +517,6 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         messageEl.className = `message ${message.sender}`;
         
         if (message.sender === 'ai') {
-            // Configure marked for AI responses
-            marked.setOptions({
-                breaks: true,
-                gfm: true,
-                sanitize: false,
-                highlight: function(code, lang) {
-                    if (Prism.languages[lang]) {
-                        return Prism.highlight(code, Prism.languages[lang], lang);
-                    }
-                    return code;
-                }
-            });
-            
             // Render markdown for AI messages
             messageEl.innerHTML = marked.parse(message.content);
             
@@ -584,7 +567,7 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         linkEl.className = "message navigation-link";
         linkEl.innerHTML = `
             <span class="link-text">Continue from: </span>
-            <span class="topic-link" data-topic-id="${message.parentTopicId}">${message.parentTopicName}</span>
+            <span class="topic-link" data-topic-id="${this.escapeHtml(message.parentTopicId)}">${this.escapeHtml(message.parentTopicName)}</span>
             <span class="link-hint"> (click to go back)</span>
         `;
         
@@ -785,24 +768,16 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         this.simulation
             .nodes(this.nodes)
             .on("tick", () => {
-                this.g.selectAll(".link")
-                    .attr("x1", d => {
-                        const sourceEdge = this.getNodeEdgePoint(d.source, d.target);
-                        return sourceEdge.x;
-                    })
-                    .attr("y1", d => {
-                        const sourceEdge = this.getNodeEdgePoint(d.source, d.target);
-                        return sourceEdge.y;
-                    })
-                    .attr("x2", d => {
-                        const targetEdge = this.getNodeEdgePoint(d.target, d.source);
-                        return targetEdge.x;
-                    })
-                    .attr("y2", d => {
-                        const targetEdge = this.getNodeEdgePoint(d.target, d.source);
-                        return targetEdge.y;
-                    });
-                
+                this.g.selectAll(".link").each((d, i, nodes) => {
+                    const sourceEdge = this.getNodeEdgePoint(d.source, d.target);
+                    const targetEdge = this.getNodeEdgePoint(d.target, d.source);
+                    d3.select(nodes[i])
+                        .attr("x1", sourceEdge.x)
+                        .attr("y1", sourceEdge.y)
+                        .attr("x2", targetEdge.x)
+                        .attr("y2", targetEdge.y);
+                });
+
                 this.g.selectAll(".node")
                     .attr("transform", d => `translate(${d.x},${d.y})`);
             });
@@ -828,12 +803,12 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         }
     }
     
-    // Test method to add a LaTeX sample message
-    addLatexTestMessage() {
-        const testMessage = "Here's some inline math: $E = mc^2$ and display math:\n\n$$\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}$$\n\nAnd more complex: $\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}$";
-        this.addMessage("ai", testMessage);
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
-    
+
     scrollToBottom() {
         const messagesContainer = document.getElementById("chat-messages");
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1369,7 +1344,7 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         item.innerHTML = `
             <div class="search-result-name">
                 ${session.isFavorite ? '<span class="favorite-star">⭐</span>' : ''}
-                ${session.name}
+                ${this.escapeHtml(session.name)}
             </div>
             <div class="search-result-info">
                 <span>${topicCount} topics</span>
@@ -1608,7 +1583,7 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
                 <div class="session-card-header">
                     <div class="session-card-name">
                         ${session.isFavorite ? '<span class="favorite-star">⭐</span>' : ''}
-                        ${session.name}
+                        ${this.escapeHtml(session.name)}
                     </div>
                 </div>
                 <div class="session-card-info">
@@ -1701,16 +1676,7 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
     saveData() {
         this.saveCurrentSessionData();
     }
-    
-    // Debug function to check current topic context
-    debugCurrentTopic() {
-        const currentTopic = this.nodes.find(n => n.id === this.currentTopicId);
-        console.log('Current topic:', currentTopic);
-        console.log('Context text:', currentTopic?.contextText);
-        console.log('All nodes:', this.nodes);
-        return currentTopic;
-    }
-    
+
 }
 
 document.addEventListener("DOMContentLoaded", () => {

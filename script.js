@@ -617,8 +617,8 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
     }
     
     getNodeEdgePoint(fromNode, toNode) {
-        const nodeWidth = 120;
-        const nodeHeight = 60;
+        const nodeWidth = 136;
+        const nodeHeight = 64;
         
         // Calculate direction vector from center of fromNode to center of toNode
         const dx = toNode.x - fromNode.x;
@@ -707,30 +707,30 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
             .attr("class", "node-bg")
             .attr("rx", 8)
             .attr("ry", 8)
-            .attr("fill", d => d.id === this.currentTopicId ? "#10a37f" : "#f7f7f8")
-            .attr("stroke", d => d.id === this.currentTopicId ? "#10a37f" : "#e5e5e5")
-            .attr("stroke-width", 1);
+            .attr("fill", d => d.id === this.currentTopicId ? "#4e7f71" : "#fffdf8")
+            .attr("stroke", d => d.id === this.currentTopicId ? "#356356" : "#ded9ce")
+            .attr("stroke-width", d => d.id === this.currentTopicId ? 2 : 1);
         
         // Add text with proper wrapping
         const textElements = nodeEnter.append("foreignObject")
             .attr("class", "node-text-container")
-            .attr("width", 120)
-            .attr("height", 60)
-            .attr("x", -60)
-            .attr("y", -30);
+            .attr("width", 136)
+            .attr("height", 64)
+            .attr("x", -68)
+            .attr("y", -32);
         
         textElements.append("xhtml:div")
             .attr("class", "node-text")
-            .style("width", "120px")
-            .style("height", "60px")
+            .style("width", "136px")
+            .style("height", "64px")
             .style("display", "flex")
             .style("align-items", "center")
             .style("justify-content", "center")
             .style("text-align", "center")
-            .style("font-size", "12px")
-            .style("font-weight", "500")
-            .style("line-height", "1.2")
-            .style("padding", "4px")
+            .style("font-size", "12.5px")
+            .style("font-weight", "700")
+            .style("line-height", "1.25")
+            .style("padding", "8px")
             .style("color", d => d.id === this.currentTopicId ? "#ffffff" : "#374151")
             .style("word-wrap", "break-word")
             .style("overflow", "hidden")
@@ -738,10 +738,10 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         
         // Update rectangle sizes based on text
         nodeEnter.selectAll(".node-bg")
-            .attr("width", 120)
-            .attr("height", 60)
-            .attr("x", -60)
-            .attr("y", -30);
+            .attr("width", 136)
+            .attr("height", 64)
+            .attr("x", -68)
+            .attr("y", -32);
         
         nodeEnter.on("click", (event, d) => {
             if (event.button === 0) {
@@ -758,8 +758,9 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         
         // Update existing nodes' colors and text
         this.g.selectAll(".node-bg")
-            .attr("fill", d => d.id === this.currentTopicId ? "#10a37f" : "#f7f7f8")
-            .attr("stroke", d => d.id === this.currentTopicId ? "#10a37f" : "#e5e5e5");
+            .attr("fill", d => d.id === this.currentTopicId ? "#4e7f71" : "#fffdf8")
+            .attr("stroke", d => d.id === this.currentTopicId ? "#356356" : "#ded9ce")
+            .attr("stroke-width", d => d.id === this.currentTopicId ? 2 : 1);
         
         this.g.selectAll(".node-text")
             .style("color", d => d.id === this.currentTopicId ? "#ffffff" : "#374151")
@@ -990,15 +991,15 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         input.value = node.topic;
         input.style.cssText = `
             background: white;
-            border: 2px solid #10a37f;
-            border-radius: 6px;
+            border: 2px solid #4e7f71;
+            border-radius: 8px;
             padding: 8px 12px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
             min-width: 150px;
             max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 24px rgba(37, 42, 49, 0.14);
         `;
         
         overlay.appendChild(input);
@@ -1063,15 +1064,15 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         input.value = node.topic;
         input.style.cssText = `
             background: white;
-            border: 2px solid #10a37f;
-            border-radius: 6px;
+            border: 2px solid #4e7f71;
+            border-radius: 8px;
             padding: 8px 12px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
             min-width: 150px;
             max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 24px rgba(37, 42, 49, 0.14);
         `;
         
         overlay.appendChild(input);
@@ -1500,7 +1501,7 @@ When the user refers to "it", "this", "that", "the concept", "the idea", or uses
         input.type = 'text';
         input.value = session.name;
         input.className = 'session-rename-input';
-        input.style.cssText = 'background: transparent; border: 1px solid #10a37f; border-radius: 4px; padding: 2px 4px; font-weight: 600; font-size: 0.95rem; width: 100%;';
+        input.style.cssText = 'background: rgba(255,253,248,0.9); border: 1px solid #4e7f71; border-radius: 6px; padding: 2px 4px; font-weight: 700; font-size: 0.95rem; width: 100%;';
         
         // Replace name with input
         const originalText = nameElement.textContent;

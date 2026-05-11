@@ -34,7 +34,6 @@ chat-graph/
 ├── script.js     # App behavior and graph logic
 ├── styles.css    # Visual design
 ├── logo.svg      # Current app logo
-├── logo.png      # Legacy logo asset
 └── README.md
 ```
 

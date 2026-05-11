@@ -1,9 +1,10 @@
-<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="160" height="160" rx="38" fill="#F7F6F1"/>
-  <path d="M37 35.5H123C129.351 35.5 134.5 40.6487 134.5 47V101C134.5 107.351 129.351 112.5 123 112.5H75.5L45.5 132V112.5H37C30.6487 112.5 25.5 107.351 25.5 101V47C25.5 40.6487 30.6487 35.5 37 35.5Z" fill="white" stroke="#252A31" stroke-width="7" stroke-linejoin="round"/>
-  <path d="M58 86L78.5 66L101.5 88L119 70.5" stroke="#252A31" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="58" cy="86" r="12" fill="#4E7F71" stroke="white" stroke-width="5"/>
-  <circle cx="78.5" cy="66" r="12" fill="#D88D63" stroke="white" stroke-width="5"/>
-  <circle cx="101.5" cy="88" r="12" fill="#5D6FA8" stroke="white" stroke-width="5"/>
-  <circle cx="119" cy="70.5" r="12" fill="#252A31" stroke="white" stroke-width="5"/>
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ChatGraph logo</title>
+  <desc id="desc">A refined chat bubble containing a connected topic graph.</desc>
+  <rect width="160" height="160" rx="36" fill="#F7F6F1"/>
+  <path d="M41 35H119C126.18 35 132 40.82 132 48V95C132 102.18 126.18 108 119 108H80.5L47 129V108H41C33.82 108 28 102.18 28 95V48C28 40.82 33.82 35 41 35Z" fill="#FFFDF8" stroke="#252A31" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M56 82L80 62L106 80" stroke="#252A31" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="56" cy="82" r="11" fill="#4E7F71" stroke="#FFFDF8" stroke-width="4"/>
+  <circle cx="80" cy="62" r="11" fill="#D88D63" stroke="#FFFDF8" stroke-width="4"/>
+  <circle cx="106" cy="80" r="11" fill="#5D6FA8" stroke="#FFFDF8" stroke-width="4"/>
 </svg>
